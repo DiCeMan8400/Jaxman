@@ -703,12 +703,12 @@ class JsPacman extends Game {
             <div class="sound-status on" style="display: none"><span class="wrap">SOUND: <span class="on">ON</span><span class="off">OFF</span></span></div>
             <div class="paused" style="display: none"><span class="wrap">PAUSED</span></div>
             <div class="splash">
-                <span class="title">"JS PAC-MAN"</span>
+                <span class="title">"Jaxman ¯\_(ツ)_/¯"</span>
                 <p class="nerd">HTML - CSS<br><br><span>JAVASCRIPT</span></p>
                 <a class="start" style="display: none">START</a>
                 <div class="loadbar"><div class="inner"></div></div>
                 <p class="keys"><span>&larr;&uarr;&darr;&rarr;</span>:MOVE <span>S</span>:SOUND <span>P</span>:PAUSE</p>
-                <div class="credits">&#169; 2014-${new Date().getFullYear()} <span>8</span>TENTACULOS <a href="https://github.com/8tentaculos/jsPacman">SOURCE+INFO</a></div>
+                <div class="credits">&#169; 2014-${new Date().getFullYear()} <span>8</span>JAX IT Data Services </div>
             </div>
         `;
     }
