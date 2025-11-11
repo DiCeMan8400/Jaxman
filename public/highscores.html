@@ -23,7 +23,7 @@
     <script>
       async function load() {
         try {
-          const res = await fetch('/api/highscores');
+          const res = await fetch('/api/highscores', { cache: 'no-store' });
           const data = await res.json();
           const rows = (data.top || []).map((e, i) => {
             const d = new Date(e.timestamp || Date.now());

@@ -104,6 +104,9 @@ const defaults = {
     score : '200',
     scores : { '200' : '400', '400' : '800', '800' : '1600' },
     blinky : null,
+    // Function injected by Game to decide if Pacman can be eaten right now.
+    // Defaults to true (vulnerable).
+    isPacmanVulnerable : () => true,
     getChaseTarget : function() {
         return this.pacmanData.tile;
     },
@@ -368,7 +371,7 @@ class Ghost extends Character {
                     // Ghost eaten by Pacman!
                     this.setMode(MODE_DEAD);
                     this.emit('item:eaten');
-                } else if (this.mode !== MODE_DEAD) {
+                } else if (this.mode !== MODE_DEAD && this.isPacmanVulnerable()) {
                     // Eat Pacman!
                     this.emit('item:eat');
                 }

@@ -66,6 +66,7 @@ class JsPacman extends Game {
             const lb = document.createElement('div');
             lb.className = 'leaderboard';
             lb.style.marginTop = '12px';
+            lb.style.textAlign = 'left';
             lb.innerHTML = '<div style="opacity:.85;margin-bottom:6px">TOP SCORES (H for list)</div><div class="rows"></div>';
             if (this.elements.splash) {
                 this.elements.splash.appendChild(lb);
@@ -116,6 +117,7 @@ class JsPacman extends Game {
             show(this.elements.start);
         });
 
+        this._invulnerableFrames = 0;
         this._loadHighscores();
     }
 
@@ -289,6 +291,8 @@ class JsPacman extends Game {
                 show(this.elements.startReady);
                 this._start = 1;
                 this._pauseFrames = 40;
+                // Short grace period to prevent instant re-death at spawn
+                this._invulnerableFrames = 90;
             } else {
                 this._pauseFrames = 120;
             }
@@ -349,6 +353,7 @@ class JsPacman extends Game {
             map : this.map,
             normalizeRefrashRate : this.normalizeRefrashRate.bind(this),
             factor : this.scaling.getFactor(),
+            isPacmanVulnerable : () => this._invulnerableFrames <= 0,
             addGameGlobalModeEventListener : listener => this.on('game:globalmode', listener),
             addGameGhostEatenEventListener : listener => this.on('game:ghost:eaten', listener),
             addPacmanPositionEventListener : listener => this.pacman.on('item:position', listener),
@@ -433,6 +438,7 @@ class JsPacman extends Game {
 
         // Move.
         if (!this._pauseFrames) {
+            if (this._invulnerableFrames) this._invulnerableFrames--;
             if (this._start === 2) {
                 hide(this.elements.startP1);
                 this.showGhosts();
@@ -685,11 +691,18 @@ class JsPacman extends Game {
             this.hideGhosts();
             this.pacman.hide();
             this.model.save();
-            // Submit high score to server (fire-and-forget).
+            // Submit high score to server and refresh leaderboard once done.
             try {
-                this._submitHighScore();
+                const p = this._submitHighScore();
+                if (p && typeof p.finally === 'function') {
+                    p.finally(() => this._loadHighscores());
+                } else {
+                    // Fallback: refresh shortly if not a Promise
+                    setTimeout(() => this._loadHighscores(), 200);
+                }
             } catch (e) {
-                // ignore
+                // Even if submission fails, try to refresh the leaderboard.
+                setTimeout(() => this._loadHighscores(), 200);
             }
         }
     }
@@ -753,7 +766,8 @@ class JsPacman extends Game {
     }
 
     async _submitHighScore() {
-        const score = this.model && this.model.highScore ? this.model.highScore : 0;
+        // Submit the score from the just-finished run, not the all-time high.
+        const score = this.model && Number.isFinite(this.model.score) ? this.model.score : 0;
         if (!Number.isFinite(score) || score <= 0) return;
 
         const payload = {
@@ -774,7 +788,7 @@ class JsPacman extends Game {
     }
     async _loadHighscores() {
         try {
-            const res = await fetch('/api/highscores');
+            const res = await fetch('/api/highscores', { cache: 'no-store' });
             const data = await res.json();
             this._renderHighscores(Array.isArray(data.top) ? data.top : []);
         } catch (e) {
