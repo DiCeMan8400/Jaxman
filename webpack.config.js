@@ -22,8 +22,16 @@ export default {
         mode : 'development',
         devtool : 'inline-source-map',
         devServer : {
-            host : '0.0.0.0',
-            port : PORT || 8080,
+            host : 'jaxman.jax.org',
+            port : PORT || 443,
+	    server: {
+  	    type: 'https',
+  	    options: {
+  	      // Option A: PFX
+    	    pfx: fs.readFileSync('e:/webs/Jaxman/jaxman_jax_org.pfx'),
+   	     passphrase: 'P@55w0rd',
+      }
+    },
             setupMiddlewares: (middlewares, devServer) => {
                 const app = devServer.app;
                 if (!app) return middlewares;
