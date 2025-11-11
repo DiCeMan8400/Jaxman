@@ -708,7 +708,7 @@ class JsPacman extends Game {
                 <a class="start" style="display: none">START</a>
                 <div class="loadbar"><div class="inner"></div></div>
                 <p class="keys"><span>&larr;&uarr;&darr;&rarr;</span>:MOVE <span>S</span>:SOUND <span>P</span>:PAUSE</p>
-                <div class="credits">&#169; 2014-${new Date().getFullYear()} <span>8</span>JAX IT Data Services </div>
+                <div class="credits">&#169; 2014-${new Date().getFullYear()} JAX IT Data Services </div>
             </div>
         `;
     }
