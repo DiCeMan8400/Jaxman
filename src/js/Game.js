@@ -62,6 +62,17 @@ class JsPacman extends Game {
             load : this.$('.loadbar')
         };
 
+        try {
+            const lb = document.createElement('div');
+            lb.className = 'leaderboard';
+            lb.style.marginTop = '12px';
+            lb.innerHTML = '<div style="opacity:.85;margin-bottom:6px">TOP SCORES (H for list)</div><div class="rows"></div>';
+            if (this.elements.splash) {
+                this.elements.splash.appendChild(lb);
+                this.elements.leaderboard = lb;
+            }
+        } catch (e) {}
+
         this.keyboard.on(EVENT_KEY_DOWN, this._onKeyDown.bind(this));
 
         this.touch.on(EVENT_SWIPE, this._onSwipe.bind(this));
@@ -104,6 +115,8 @@ class JsPacman extends Game {
             hide(this.elements.load);
             show(this.elements.start);
         });
+
+        this._loadHighscores();
     }
 
     startLevel() {
@@ -625,8 +638,8 @@ class JsPacman extends Game {
     }
 
     _onKeyDown(event) {
-        // Sound on/off.
-        if (event.keyCode === 83) {
+        // Sound on/off (M key).
+        if (event.keyCode === 77) {
             if (!this.soundEnabled) return;
             // Mute Sound.
             this._muted = !this._muted;
@@ -648,6 +661,12 @@ class JsPacman extends Game {
             if (this._paused) this.pause();
             else this.resume();
         }
+        else if (event.keyCode === 72) {
+            const isSplashVisible = this.elements.splash && this.elements.splash.style.display !== 'none';
+            if (isSplashVisible) {
+                try { window.open('/highscores.html', '_blank'); } catch (e) { window.location.href = '/highscores.html'; }
+            }
+        }
     }
 
     _onChangeScore(model, score) {
@@ -666,6 +685,12 @@ class JsPacman extends Game {
             this.hideGhosts();
             this.pacman.hide();
             this.model.save();
+            // Submit high score to server (fire-and-forget).
+            try {
+                this._submitHighScore();
+            } catch (e) {
+                // ignore
+            }
         }
     }
     // Extra life.
@@ -700,17 +725,77 @@ class JsPacman extends Game {
             <div class="start-p1" style="display: none">PLAYER ONE</div>
             <div class="start-ready" style="display: none">READY!</div>
             <div class="game-over" style="display: none">GAME OVER</div>
-            <div class="sound-status on" style="display: none"><span class="wrap">SOUND: <span class="on">ON</span><span class="off">OFF</span></span></div>
+            <div class="sound-status on" style="display: none"><span class="wrap">MUSIC: <span class="on">ON</span><span class="off">OFF</span></span></div>
             <div class="paused" style="display: none"><span class="wrap">PAUSED</span></div>
             <div class="splash">
                 <span class="title">"Jaxman ¯\_(ツ)_/¯"</span>
                 <p class="nerd">HTML - CSS<br><br><span>JAVASCRIPT</span></p>
                 <a class="start" style="display: none">START</a>
                 <div class="loadbar"><div class="inner"></div></div>
-                <p class="keys"><span>&larr;&uarr;&darr;&rarr;</span>:MOVE <span>S</span>:SOUND <span>P</span>:PAUSE</p>
-                <div class="credits">&#169; 2014-${new Date().getFullYear()} <span>8</span>JAX IT Data Services </div>
+                <p class="keys"><span>&larr;&uarr;&darr;&rarr;</span>:MOVE <span>M</span>:MUSIC <span>P</span>:PAUSE</p>
+            <div class="credits">&#169; 2014-${new Date().getFullYear()} <span>8</span>JAX IT Data Services </div>
             </div>
         `;
+    }
+
+    _getOrAskPlayerName() {
+        try {
+            const key = 'jspacman:playerName';
+            let name = window.localStorage && window.localStorage.getItem(key);
+            if (!name) {
+                name = window.prompt('Enter your name for the high-score table:', '') || 'Anonymous';
+                if (window.localStorage) window.localStorage.setItem(key, name);
+            }
+            return (name || 'Anonymous').toString().substring(0, 32);
+        } catch (e) {
+            return 'Anonymous';
+        }
+    }
+
+    async _submitHighScore() {
+        const score = this.model && this.model.highScore ? this.model.highScore : 0;
+        if (!Number.isFinite(score) || score <= 0) return;
+
+        const payload = {
+            name : this._getOrAskPlayerName(),
+            score : Math.floor(score),
+            timestamp : Date.now()
+        };
+
+        try {
+            await fetch('/api/highscores', {
+                method : 'POST',
+                headers : { 'Content-Type' : 'application/json' },
+                body : JSON.stringify(payload)
+            });
+        } catch (err) {
+            // ignore network errors; gameplay shouldn’t be blocked
+        }
+    }
+    async _loadHighscores() {
+        try {
+            const res = await fetch('/api/highscores');
+            const data = await res.json();
+            this._renderHighscores(Array.isArray(data.top) ? data.top : []);
+        } catch (e) {
+            this._renderHighscores([]);
+        }
+    }
+
+    _renderHighscores(list) {
+        if (!this.elements.leaderboard) return;
+        const rowsEl = this.elements.leaderboard.querySelector('.rows');
+        if (!rowsEl) return;
+        const top = (list || []).slice(0, 4);
+        if (!top.length) {
+            rowsEl.innerHTML = '<div style="opacity:.7">No scores yet.</div>';
+            return;
+        }
+        rowsEl.innerHTML = top.map((e, i) => {
+            const name = ((e && e.name) || 'Anonymous').toString().substring(0, 32);
+            const score = (e && e.score) || 0;
+            return `<div><span style=\"display:inline-block;width:18px\">${i+1}.</span> <span style=\"display:inline-block;min-width:140px\">${name}</span> <span style=\"float:right;\">${score}</span></div>`;
+        }).join('');
     }
 }
 
