@@ -20,7 +20,7 @@ export default {
         mode : 'production'
     } : {
         mode : 'development',
-        devtool : 'false',
+        devtool : false,
         devServer : {
             host : 'jaxman.jax.org',
             port : PORT || 443,
