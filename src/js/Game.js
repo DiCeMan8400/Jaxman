@@ -728,12 +728,12 @@ class JsPacman extends Game {
             <div class="sound-status on" style="display: none"><span class="wrap">MUSIC: <span class="on">ON</span><span class="off">OFF</span></span></div>
             <div class="paused" style="display: none"><span class="wrap">PAUSED</span></div>
             <div class="splash">
-                <span class="title">"Jaxman ¯\_(ツ)_/¯"</span>
-                <p class="nerd">HTML - CSS<br><br><span>JAVASCRIPT</span></p>
+                <span class="title">"Jaxman ¯\\_(ツ)_/¯"</span>
+                <p class="nerd">Jax IT<br><br><span>Competition</span></p>
                 <a class="start" style="display: none">START</a>
                 <div class="loadbar"><div class="inner"></div></div>
                 <p class="keys"><span>&larr;&uarr;&darr;&rarr;</span>:MOVE <span>M</span>:MUSIC <span>P</span>:PAUSE</p>
-            <div class="credits">&#169; 2014-${new Date().getFullYear()} <span>8</span>JAX IT Data Services </div>
+            <div class="credits">&#169; 2014-${new Date().getFullYear()} JAX IT Data Services </div>
             </div>
         `;
     }
