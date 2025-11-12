@@ -75,6 +75,13 @@ class JsPacman extends Game {
         } catch (e) {}
 
         this.keyboard.on(EVENT_KEY_DOWN, this._onKeyDown.bind(this));
+        // Allow changing player name from splash with "N"
+        this.keyboard.on(EVENT_KEY_DOWN, (event) => {
+            if (event && event.keyCode === 78) { // N
+                const isSplashVisible = this.elements.splash && this.elements.splash.style.display !== 'none';
+                if (isSplashVisible) this._promptForPlayerName();
+            }
+        });
 
         this.touch.on(EVENT_SWIPE, this._onSwipe.bind(this));
 
@@ -745,7 +752,7 @@ class JsPacman extends Game {
                 <p class="nerd">Jax IT<br><br><span>Competition</span></p>
                 <a class="start" style="display: none">START</a>
                 <div class="loadbar"><div class="inner"></div></div>
-                <p class="keys"><span>&larr;&uarr;&darr;&rarr;</span>:MOVE <span>M</span>:MUSIC <span>P</span>:PAUSE</p>
+                <p class="keys"><span>&larr;&uarr;&darr;&rarr;</span>:MOVE <span>M</span>:MUSIC <span>P</span>:PAUSE <span>N</span>:NAME</p>
             <div class="credits">&#169; 2014-${new Date().getFullYear()} JAX IT Data Services </div>
             </div>
         `;
@@ -756,12 +763,35 @@ class JsPacman extends Game {
             const key = 'jspacman:playerName';
             let name = window.localStorage && window.localStorage.getItem(key);
             if (!name) {
-                name = window.prompt('Enter your name for the high-score table:', '') || 'Anonymous';
+                const newName = this._promptForPlayerName();
+                name = newName || 'Anonymous';
                 if (window.localStorage) window.localStorage.setItem(key, name);
             }
             return (name || 'Anonymous').toString().substring(0, 32);
         } catch (e) {
             return 'Anonymous';
+        }
+    }
+
+    _promptForPlayerName() {
+        try {
+            const key = 'jspacman:playerName';
+            let name;
+            while (true) {
+                name = window.prompt('Enter your name for the high-score table:', (window.localStorage && window.localStorage.getItem(key)) || '');
+                if (name === null) {
+                    return null; // cancel
+                }
+                const trimmed = (name || '').trim();
+                if (trimmed.length > 0) {
+                    const finalName = trimmed.substring(0, 32);
+                    if (window.localStorage) window.localStorage.setItem(key, finalName);
+                    return finalName;
+                }
+                // otherwise loop until non-blank
+            }
+        } catch (e) {
+            return null;
         }
     }
 
