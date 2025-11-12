@@ -24,6 +24,29 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DIST_DIR = path.join(__dirname, 'dist');
 
+// ---- highscores persistence (added) ----
+const DATA_DIR = process.env.DATA_DIR || 'e:/webs/Jaxman/data';
+const HIGHSCORES_PATH = process.env.HIGHSCORES_PATH || path.join(DATA_DIR, 'highscores.json');
+
+function ensureDir(p) {
+  try { fs.mkdirSync(p, { recursive: true }); } catch {}
+}
+function readScoresFromDisk() {
+  try {
+    const raw = fs.readFileSync(HIGHSCORES_PATH, 'utf-8');
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+function writeScoresToDisk(scores) {
+  ensureDir(DATA_DIR);
+  try {
+    fs.writeFileSync(HIGHSCORES_PATH, JSON.stringify(scores.slice(0, 200), null, 2), 'utf-8');
+  } catch {}
+}
+
 // ---- express app ----
 const app = express();
 app.set('trust proxy', true);
@@ -37,8 +60,8 @@ app.use((req, res, next) => {
 // Parse JSON bodies for API
 app.use(express.json({ limit: '32kb' }));
 
-// In-memory scoreboard (ephemeral)
-const scores = [];
+// In-memory scoreboard (ephemeral)  // (now hydrated from disk)
+const scores = readScoresFromDisk();
 
 app.get('/api/highscores', (req, res) => {
   const list = scores.slice().sort((a, b) => (b.score || 0) - (a.score || 0));
@@ -56,6 +79,7 @@ app.post('/api/highscores', (req, res) => {
     if (!Number.isFinite(entry.score) || entry.score <= 0) throw new Error('Invalid score');
     scores.push(entry);
     scores.sort((a, b) => (b.score || 0) - (a.score || 0));
+    writeScoresToDisk(scores); // persist after update
     res.json({ ok: true, entry, top: scores.slice(0, 10) });
   } catch (e) {
     res.status(400).json({ ok: false, error: e.message || 'Bad Request' });
